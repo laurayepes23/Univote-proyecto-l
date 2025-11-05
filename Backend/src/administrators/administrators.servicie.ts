@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAdministratorDto } from './dto/create-administrator.dto';
 import { UpdateAdministratorDto } from './dto/update-administrator.dto';
@@ -12,7 +12,7 @@ export class AdministratorsService {
     findAll() {
         return this.prisma.administrador.findMany({
             include: {
-                elections: true // Incluir elecciones relacionadas
+                elections: true
             }
         });
     }
@@ -30,7 +30,8 @@ export class AdministratorsService {
             throw new NotFoundException(`Administrador con ID ${id} no encontrado`);
         }
 
-        return admin;
+        const { contrasena_admin, ...result } = admin;
+        return result;
     }
 
     // Crear nuevo administrador
@@ -78,16 +79,38 @@ export class AdministratorsService {
         return result;
     }
 
+    // ✅ NUEVO MÉTODO: Validar contraseña
+    async validatePassword(adminId: number, password: string) {
+        const admin = await this.prisma.administrador.findUnique({
+            where: { id_admin: adminId },
+        });
+
+        if (!admin) {
+            throw new NotFoundException('Administrador no encontrado');
+        }
+
+        const isValid = await bcrypt.compare(password, admin.contrasena_admin);
+        return { valid: isValid };
+    }
+
     // Actualizar administrador
     async update(id: number, updateAdministratorDto: UpdateAdministratorDto) {
         try {
-            return await this.prisma.administrador.update({
+            // Si se está actualizando la contraseña, hashearla
+            if (updateAdministratorDto.contrasena_admin) {
+                updateAdministratorDto.contrasena_admin = await bcrypt.hash(updateAdministratorDto.contrasena_admin, 10);
+            }
+
+            const updatedAdmin = await this.prisma.administrador.update({
                 where: { id_admin: id },
                 data: updateAdministratorDto,
                 include: {
                     elections: true
                 }
             });
+
+            const { contrasena_admin, ...result } = updatedAdmin;
+            return result;
         } catch (error) {
             throw new NotFoundException(`Administrador con ID ${id} no encontrado`);
         }

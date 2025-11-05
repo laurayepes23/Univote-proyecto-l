@@ -21,6 +21,13 @@ export class AdministratorsController {
     return this.administratorsService.login(loginAdminDto.correo_admin, loginAdminDto.contrasena_admin);
   }
 
+  // ✅ NUEVO ENDPOINT: Validar contraseña
+  @Post('validate-password')
+  @HttpCode(HttpStatus.OK)
+  validatePassword(@Body() validatePasswordDto: { adminId: number; password: string }) {
+    return this.administratorsService.validatePassword(validatePasswordDto.adminId, validatePasswordDto.password);
+  }
+
   // Obtener todos los administradores
   @Get()
   findAll() {

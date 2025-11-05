@@ -1,4 +1,3 @@
-// src/proposals/proposals.controller.ts
 import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { ProposalsService } from './proposals.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
@@ -16,6 +15,21 @@ export class ProposalsController {
   @Get()
   findAll() {
     return this.proposalsService.findAll();
+  }
+
+  @Get('public')
+  findAllPublic() {
+    return this.proposalsService.findAllPublic();
+  }
+
+  @Get('list')
+  findAllList() {
+    return this.proposalsService.findAllPublic();
+  }
+
+  @Get('owner/:candidateId')
+  findAllByOwner(@Param('candidateId') candidateId: string) {
+    return this.proposalsService.findAllByOwner(+candidateId);
   }
 
   @Get(':id')

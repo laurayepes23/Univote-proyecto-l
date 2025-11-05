@@ -1,7 +1,20 @@
-// src/proposals/dto/create-proposal.dto.ts
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsEnum } from 'class-validator';
+
 export class CreateProposalDto {
-    titulo_proposal: string;
-    descripcion_proposal: string;
-    estado_proposal: string;
-    candidateId: number;
+  @IsString()
+  @IsNotEmpty()
+  titulo_proposal: string;
+
+  @IsString()
+  @IsNotEmpty()
+  descripcion_proposal: string;
+
+  @IsString()
+  @IsOptional()
+  @IsEnum(['Activa', 'Inactiva'])
+  estado_proposal?: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  candidateId: number;
 }

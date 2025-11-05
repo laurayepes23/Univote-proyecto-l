@@ -74,6 +74,7 @@ export default function App() {
           <Route path="/GestionarPropuestas" element={<GestionarPropuestas />} />
           <Route path="/CrearPropuesta" element={<CrearPropuesta />} />
           <Route path="/MiPerfilCandidato" element={<MiPerfilCandidato />} />
+          
 
 
         </Routes>

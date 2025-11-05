@@ -1,153 +1,153 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+  // This is your Prisma schema file,
+  // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
-}
+  generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
+  }
 
-// Este bloque es fundamental, le dice a Prisma
-// qué base de datos usar y dónde encontrar la URL de conexión.
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+  // Este bloque es fundamental, le dice a Prisma
+  // qué base de datos usar y dónde encontrar la URL de conexión.
+  datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+  }
 
-// Modelos del proyecto
+  // Modelos del proyecto
 
-model Administrador {
-  id_admin         Int        @id @default(autoincrement())
-  nombre_admin     String
-  apellido_admin   String
-  tipo_doc_admin   String
-  num_doc_admin    BigInt
-  correo_admin     String     @unique
-  contrasena_admin String
-  elections        Election[]
-}
+  model Administrador {
+    id_admin         Int        @id @default(autoincrement())
+    nombre_admin     String
+    apellido_admin   String
+    tipo_doc_admin   String
+    num_doc_admin    BigInt
+    correo_admin     String     @unique
+    contrasena_admin String
+    elections        Election[]
+  }
 
-model Voter {
-  id_voter         Int    @id @default(autoincrement())
-  nombre_voter     String
-  apellido_voter   String
-  tipo_doc_voter   String
-  num_doc_voter    BigInt @unique
-  correo_voter     String @unique
-  estado_voter     String
-  contrasena_voter String
+  model Voter {
+    id_voter         Int    @id @default(autoincrement())
+    nombre_voter     String
+    apellido_voter   String
+    tipo_doc_voter   String
+    num_doc_voter    BigInt @unique
+    correo_voter     String @unique
+    estado_voter     String
+    contrasena_voter String
 
-  // Relaciones
-  roleId Int  @map("id_role")
-  role   Role @relation(fields: [roleId], references: [id_role])
+    // Relaciones
+    roleId Int  @map("id_role")
+    role   Role @relation(fields: [roleId], references: [id_role])
 
-  electionId Int?      @map("id_election")
-  election   Election? @relation(fields: [electionId], references: [id_election])
+    electionId Int?      @map("id_election")
+    election   Election? @relation(fields: [electionId], references: [id_election])
 
-  careerId Int    @map("id_career")
-  career   Career @relation(fields: [careerId], references: [id_career])
+    careerId Int    @map("id_career")
+    career   Career @relation(fields: [careerId], references: [id_career])
 
-  vote Vote[] // Relación 1 a 1
-}
+    vote Vote[] // Relación 1 a 1
+  }
 
-model Election {
-  id_election     Int      @id @default(autoincrement())
-  nombre_election String
-  fecha_inicio    DateTime
-  fecha_fin       DateTime
-  estado_election String
+  model Election {
+    id_election     Int      @id @default(autoincrement())
+    nombre_election String
+    fecha_inicio    DateTime
+    fecha_fin       DateTime
+    estado_election String
 
-  // Relaciones
-  admin_id      Int           @map("id_admin")
-  administrador Administrador @relation(fields: [admin_id], references: [id_admin])
+    // Relaciones
+    admin_id      Int           @map("id_admin")
+    administrador Administrador @relation(fields: [admin_id], references: [id_admin])
 
-  candidates Candidate[] // 1 a muchos con Candidato
-  voters     Voter[] // 1 a muchos con Votante
-  result     Result? // 1 a 1 con Resultado
+    candidates Candidate[] // 1 a muchos con Candidato
+    voters     Voter[] // 1 a muchos con Votante
+    result     Result? // 1 a 1 con Resultado
 
-  Vote Vote[]
-}
+    Vote Vote[]
+  }
 
-model Candidate {
-  id_candidate         Int     @id @default(autoincrement())
-  nombre_candidate     String
-  apellido_candidate   String
-  tipo_doc_candidate   String
-  num_doc_candidate    BigInt  @unique
-  correo_candidate     String  @unique
-  estado_candidate     String
-  foto_candidate       String? // Campo opcional
-  contrasena_candidate String
+  model Candidate {
+    id_candidate         Int     @id @default(autoincrement())
+    nombre_candidate     String
+    apellido_candidate   String
+    tipo_doc_candidate   String
+    num_doc_candidate    BigInt  @unique
+    correo_candidate     String  @unique
+    estado_candidate     String
+    foto_candidate       String? // Campo opcional
+    contrasena_candidate String
 
-  // Claves foráneas y relaciones
-  roleId Int  @map("id_role")
-  role   Role @relation(fields: [roleId], references: [id_role])
+    // Claves foráneas y relaciones
+    roleId Int  @map("id_role")
+    role   Role @relation(fields: [roleId], references: [id_role])
 
-  careerId Int    @map("id_career")
-  career   Career @relation(fields: [careerId], references: [id_career])
+    careerId Int    @map("id_career")
+    career   Career @relation(fields: [careerId], references: [id_career])
 
-  electionId Int?      @map("id_election") // Campo opcional
-  election   Election? @relation(fields: [electionId], references: [id_election])
+    electionId Int?      @map("id_election") // Campo opcional
+    election   Election? @relation(fields: [electionId], references: [id_election])
 
-  proposals Proposal[]
-  result    Result?
-  votes     Vote[]
-}
+    proposals Proposal[]
+    result    Result?
+    votes     Vote[]
+  }
 
-model Vote {
-  id_vote    Int      @id @default(autoincrement())
-  fecha_vote DateTime
-  hora_vote  DateTime
+  model Vote {
+    id_vote    Int      @id @default(autoincrement())
+    fecha_vote DateTime
+    hora_vote  DateTime
 
-  // Relación 1 a 1 con Votante
-  voterId Int   @map("id_voter")
-  voter   Voter @relation(fields: [voterId], references: [id_voter])
+    // Relación 1 a 1 con Votante
+    voterId Int   @map("id_voter")
+    voter   Voter @relation(fields: [voterId], references: [id_voter])
 
-  // Relación con Candidato
-  candidateId Int?       @map("id_candidate") // <-- Este es el nombre del campo
-  candidate   Candidate? @relation(fields: [candidateId], references: [id_candidate])
+    // Relación con Candidato
+    candidateId Int?       @map("id_candidate") // <-- Este es el nombre del campo
+    candidate   Candidate? @relation(fields: [candidateId], references: [id_candidate])
 
-  electionId  Int?       @map("id_election")
-  election    Election?  @relation(fields: [electionId], references: [id_election])
-}
+    electionId  Int?       @map("id_election")
+    election    Election?  @relation(fields: [electionId], references: [id_election])
+  }
 
-model Proposal {
-  id_proposal          Int    @id @default(autoincrement())
-  titulo_proposal      String
-  descripcion_proposal String
-  estado_proposal      String
+  model Proposal {
+    id_proposal          Int    @id @default(autoincrement())
+    titulo_proposal      String
+    descripcion_proposal String
+    estado_proposal      String
 
-  // Relación con Candidato
-  candidateId Int       @map("id_candidate")
-  candidate   Candidate @relation(fields: [candidateId], references: [id_candidate])
-}
+    // Relación con Candidato
+    candidateId Int       @map("id_candidate")
+    candidate   Candidate @relation(fields: [candidateId], references: [id_candidate])
+  }
 
-model Career {
-  id_career       Int    @id @default(autoincrement())
-  nombre_career   String
-  facultad_career String
+  model Career {
+    id_career       Int    @id @default(autoincrement())
+    nombre_career   String
+    facultad_career String
 
-  // Relación 1 a muchos con Votantes
-  voters     Voter[]
-  candidates Candidate[]
-}
+    // Relación 1 a muchos con Votantes
+    voters     Voter[]
+    candidates Candidate[]
+  }
 
-model Result {
-  id_result   Int @id @default(autoincrement())
-  total_votes Int
+  model Result {
+    id_result   Int @id @default(autoincrement())
+    total_votes Int
 
-  // Relaciones 1 a 1
-  electionId Int      @unique @map("id_election")
-  election   Election @relation(fields: [electionId], references: [id_election])
+    // Relaciones 1 a 1
+    electionId Int      @unique @map("id_election")
+    election   Election @relation(fields: [electionId], references: [id_election])
 
-  candidateId Int       @unique @map("id_candidate")
-  candidate   Candidate @relation(fields: [candidateId], references: [id_candidate])
-}
+    candidateId Int       @unique @map("id_candidate")
+    candidate   Candidate @relation(fields: [candidateId], references: [id_candidate])
+  }
 
-model Role {
-  id_role     Int    @id @default(autoincrement())
-  nombre_role String
+  model Role {
+    id_role     Int    @id @default(autoincrement())
+    nombre_role String
 
-  // Relación 1 a muchos con Votantes
-  voters     Voter[]
-  candidates Candidate[]
-}
+    // Relación 1 a muchos con Votantes
+    voters     Voter[]
+    candidates Candidate[]
+  }

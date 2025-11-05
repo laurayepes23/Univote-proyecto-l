@@ -1,5 +1,3 @@
-// src/voters/voters.controller.ts
-
 import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { VotersService } from './voters.service';
 import { CreateVoterDto } from './dto/create-voter.dto';
@@ -12,12 +10,14 @@ export class VotersController {
 
     @Post()
     create(@Body() createVoterDto: CreateVoterDto) {
+        console.log('🆕 Creando nuevo votante');
         return this.votersService.create(createVoterDto);
     }
 
     @HttpCode(HttpStatus.OK)
     @Post('login')
     async login(@Body() loginVoterDto: LoginVoterDto) {
+        console.log('🔐 Inicio de sesión votante');
         const voter = await this.votersService.login(loginVoterDto.correo_voter, loginVoterDto.contrasena_voter);
         return {
             message: 'Inicio de sesión exitoso',
@@ -25,23 +25,56 @@ export class VotersController {
         };
     }
 
+    @Post('validate-password')
+    @HttpCode(HttpStatus.OK)
+    async validatePassword(@Body() validatePasswordDto: { voterId: number; password: string }) {
+        console.log('🔐 Validando contraseña - Voter ID:', validatePasswordDto.voterId);
+        return this.votersService.validatePassword(validatePasswordDto.voterId, validatePasswordDto.password);
+    }
+
     @Get()
     findAll() {
+        console.log('📋 Obteniendo todos los votantes');
         return this.votersService.findAll();
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.votersService.findOne(+id);
+    async findOne(@Param('id') id: string) {
+        console.log('🔍 Endpoint findOne llamado - ID:', id);
+        try {
+            const voterId = parseInt(id);
+            if (isNaN(voterId)) {
+                throw new Error('ID inválido');
+            }
+            const result = await this.votersService.findOne(voterId);
+            console.log('✅ findOne completado exitosamente');
+            return result;
+        } catch (error) {
+            console.error('❌ Error en endpoint findOne:', error);
+            throw error;
+        }
     }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() updateVoterDto: UpdateVoterDto) {
-        return this.votersService.update(+id, updateVoterDto);
+    async update(@Param('id') id: string, @Body() updateVoterDto: UpdateVoterDto) {
+        console.log('🔄 Endpoint update llamado - ID:', id, 'Data:', updateVoterDto);
+        try {
+            const voterId = parseInt(id);
+            if (isNaN(voterId)) {
+                throw new Error('ID inválido');
+            }
+            const result = await this.votersService.update(voterId, updateVoterDto);
+            console.log('✅ Update completado exitosamente');
+            return result;
+        } catch (error) {
+            console.error('❌ Error en endpoint update:', error);
+            throw error;
+        }
     }
 
     @Delete(':id')
     remove(@Param('id') id: string) {
+        console.log('🗑️ Eliminando votante ID:', id);
         return this.votersService.remove(+id);
     }
 }

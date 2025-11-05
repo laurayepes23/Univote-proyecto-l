@@ -1,5 +1,13 @@
 // src/voters/dto/update-voter.dto.ts
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateVoterDto } from './create-voter.dto';
+import { IsString, IsOptional, IsEmail, MinLength } from 'class-validator';
 
-export class UpdateVoterDto extends PartialType(CreateVoterDto) {}
+export class UpdateVoterDto {
+  @IsOptional()
+  @IsEmail()
+  correo_voter?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  contrasena_voter?: string;
+}

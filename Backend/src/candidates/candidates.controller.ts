@@ -1,89 +1,106 @@
-// src/candidates/candidates.controller.ts
 import {
   Controller,
+  Get,
   Post,
   Body,
-  UseInterceptors,
-  UploadedFile,
-  BadRequestException,
-  Get,
   Patch,
   Param,
-} from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { CandidatesService } from './candidates.service';
-import { CreateCandidateDto } from './dto/create-candidate.dto';
-import { LoginCandidateDto } from './dto/login-candidate.dto';
-import { UpdateCandidateDto } from './dto/update-candidate.dto';
-import { ApplyToElectionDto } from './dto/apply-to-election.dto'; 
+  Delete,
+  UseInterceptors,
+  UploadedFile,
+  ParseIntPipe,
+  BadRequestException,
+  HttpCode,
+  HttpStatus,
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { CandidatesService } from "./candidates.service";
+import { CreateCandidateDto } from "./dto/create-candidate.dto";
+import { LoginCandidateDto } from "./dto/login-candidate.dto";
+import { UpdateCandidateDto } from "./dto/update-candidate.dto";
+import { ApplyToElectionDto } from "./dto/apply-to-election.dto";
+import { multerConfig } from "./upload.config";
 
-
-@Controller('candidates')
+@Controller("candidates")
 export class CandidatesController {
-  constructor(private readonly candidatesService: CandidatesService) { }
+  constructor(private readonly candidatesService: CandidatesService) {}
 
-  // --- NUEVO ENDPOINT PARA RECIBIR LA POSTULACIÓN ---
-  @Patch('apply')
+  @Get(":id")
+  findOne(@Param("id", ParseIntPipe) id: number) {
+    return this.candidatesService.findOne(id);
+  }
+
+  @Post("apply")
+  @HttpCode(HttpStatus.OK)
   applyToElection(@Body() applyToElectionDto: ApplyToElectionDto) {
     return this.candidatesService.applyToElection(applyToElectionDto);
   }
-  // --- FIN DEL ENDPOINT ---
 
   @Get()
   findAll() {
     return this.candidatesService.findAll();
   }
 
-  // --- NUEVO ENDPOINT PARA OBTENER UN CANDIDATO Y SUS PROPUESTAS ---
-  @Get(':id/proposals')
-  findOneWithProposals(@Param('id') id: string) {
-    return this.candidatesService.findOneWithProposals(+id);
-  }
-  // --- FIN DEL ENDPOINT NUEVO ---
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCandidateDto: UpdateCandidateDto) {
-    return this.candidatesService.update(+id, updateCandidateDto);
+  @Get(":id/proposals")
+  findOneWithProposals(@Param("id", ParseIntPipe) id: number) {
+    return this.candidatesService.findOneWithProposals(id);
   }
 
-
-   @Post('register')
-  @UseInterceptors(
-    FileInterceptor('foto_candidate', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const extension = extname(file.originalname);
-          cb(null, `${uniqueSuffix}${extension}`);
-        },
-      }),
-      fileFilter: (req, file, cb) => {
-        if (!file) {
-          cb(null, true); // Permite el registro sin foto
-        } else if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-          return cb(
-            new BadRequestException('Solo se permiten archivos de imagen.'),
-            false,
-          );
-        }
-        cb(null, true);
-      },
-    }),
-  )
-  async register(
-    @Body() createCandidateDto: CreateCandidateDto,
-    @UploadedFile() foto_candidate: Express.Multer.File,
+  @Patch(":id")
+  update(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() updateCandidateDto: UpdateCandidateDto
   ) {
-    // Aquí el DTO ya ha sido validado y transformado por el `ValidationPipe`
+    return this.candidatesService.update(id, updateCandidateDto);
+  }
+
+  @Post("register")
+  @UseInterceptors(FileInterceptor("foto_candidate", multerConfig))
+  create(
+    @Body() createCandidateDto: CreateCandidateDto,
+    @UploadedFile() foto_candidate?: Express.Multer.File
+  ) {
     return this.candidatesService.create(createCandidateDto, foto_candidate);
   }
 
-  @Post('login')
-  async login(@Body() loginCandidateDto: LoginCandidateDto) {
+  @Post(":id/photo")
+  @UseInterceptors(FileInterceptor("photo", multerConfig))
+  async uploadPhoto(
+    @Param("id", ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    if (!file) {
+      throw new BadRequestException("No se ha proporcionado ninguna imagen");
+    }
+
+    return this.candidatesService.uploadPhoto(id, file);
+  }
+
+  @Delete(":id/photo")
+  async deletePhoto(@Param("id", ParseIntPipe) id: number) {
+    return this.candidatesService.deletePhoto(id);
+  }
+
+  @Post("login")
+  @HttpCode(HttpStatus.OK)
+  login(@Body() loginCandidateDto: LoginCandidateDto) {
     return this.candidatesService.login(loginCandidateDto);
+  }
+
+  @Post("validate-password")
+  @HttpCode(HttpStatus.OK)
+  async validatePassword(
+    @Body() validatePasswordDto: { candidateId: number; password: string }
+  ) {
+    return this.candidatesService.validatePassword(
+      validatePasswordDto.candidateId,
+      validatePasswordDto.password
+    );
+  }
+
+  @Patch(":id/withdraw-election")
+  @HttpCode(HttpStatus.OK)
+  async withdrawFromElection(@Param("id", ParseIntPipe) id: number) {
+    return this.candidatesService.withdrawFromElection(id);
   }
 }

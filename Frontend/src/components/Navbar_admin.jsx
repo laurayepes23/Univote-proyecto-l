@@ -43,6 +43,13 @@ const Navbar_admin = () => {
                 <span className="block h-0.5 w-full bg-white rounded"></span>
             </button>
 
+          <li
+            className="md:px-4 py-3 md:py-0 border-b border-blue-800 md:border-none hover:bg-blue-800"
+            onClick={() => setMenuOpen(false)}
+          >
+            <Link to="/Administrador">Inicio</Link>
+          </li>
+
             {/* Menú principal */}
             <ul
                 className={`md:flex md:items-center md:gap-6 md:static absolute top-20 left-0 w-full md:w-auto bg-blue-900 md:bg-transparent transition-transform duration-300 ease-in-out ${menuOpen ? "translate-x-0" : "-translate-x-full"
@@ -63,6 +70,8 @@ const Navbar_admin = () => {
                         </li>
                     </ul>
                 </li>
+
+
 
                 {/* Gestionar Elecciones */}
                 <li

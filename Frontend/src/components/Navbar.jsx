@@ -21,7 +21,7 @@ const Navbar = () => {
     <>
       <nav className="fixed top-0 w-full bg-blue-900 text-white flex items-center justify-between px-5 h-24 z-50">
         
-        <Link to="/Home">
+        <Link to="/">
           <img
             src="/public/img/logo-navbar.jpeg"
             alt="Logo"
@@ -48,6 +48,14 @@ const Navbar = () => {
             md:translate-x-0
           `}
         >
+          {/* Enlace 'inicio' */}
+          <li
+            className="md:px-4 py-3 md:py-0 border-b border-blue-800 md:border-none hover:bg-blue-800"
+            onClick={() => setMenuOpen(false)}
+          >
+            <Link to="/">Inicio</Link>
+          </li>
+          
           {/* Menú 'Nosotros' */}
           <li
             className="relative group cursor-pointer md:px-4 py-3 md:py-0 border-b border-blue-800 md:border-none"
@@ -84,6 +92,9 @@ const Navbar = () => {
               ))}
             </ul>
           </li>
+
+
+          
 
           {/* Enlace 'Login' */}
           <li
