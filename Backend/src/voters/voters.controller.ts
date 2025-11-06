@@ -1,12 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
 import { VotersService } from './voters.service';
 import { CreateVoterDto } from './dto/create-voter.dto';
 import { UpdateVoterDto } from './dto/update-voter.dto';
 import { LoginVoterDto } from './dto/login-voter.dto';
+import { VoterJwtGuard } from '../auth/guards/voter-jwt.guard';
+import { VoterAuthService } from '../auth/services/voter-auth.service';
 
 @Controller('voters')
 export class VotersController {
-    constructor(private readonly votersService: VotersService) { }
+    constructor(
+        private readonly votersService: VotersService,
+        private readonly voterAuthService: VoterAuthService
+    ) { }
 
     @Post()
     create(@Body() createVoterDto: CreateVoterDto) {
@@ -18,11 +23,13 @@ export class VotersController {
     @Post('login')
     async login(@Body() loginVoterDto: LoginVoterDto) {
         console.log('🔐 Inicio de sesión votante');
-        const voter = await this.votersService.login(loginVoterDto.correo_voter, loginVoterDto.contrasena_voter);
-        return {
-            message: 'Inicio de sesión exitoso',
-            voter: voter
-        };
+        return this.voterAuthService.login(loginVoterDto.correo_voter, loginVoterDto.contrasena_voter);
+    }
+
+    @UseGuards(VoterJwtGuard)
+    @Get('profile')
+    getProfile(@Request() req) {
+        return req.user;
     }
 
     @Post('validate-password')
@@ -55,6 +62,7 @@ export class VotersController {
         }
     }
 
+    @UseGuards(VoterJwtGuard)
     @Patch(':id')
     async update(@Param('id') id: string, @Body() updateVoterDto: UpdateVoterDto) {
         console.log('🔄 Endpoint update llamado - ID:', id, 'Data:', updateVoterDto);
@@ -72,6 +80,7 @@ export class VotersController {
         }
     }
 
+    @UseGuards(VoterJwtGuard)
     @Delete(':id')
     remove(@Param('id') id: string) {
         console.log('🗑️ Eliminando votante ID:', id);

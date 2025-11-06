@@ -1,0 +1,257 @@
+{
+	"info": {
+		"_postman_id": "a7b3c1d2-ef45-6789-gh01-ijklmnop2345",
+		"name": "Univote Auth Testing",
+		"description": "Colección para probar autenticación JWT de Candidatos y Votantes",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Candidatos",
+			"item": [
+				{
+					"name": "Registrar Candidato",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre_candidate\": \"Juan\",\n    \"apellido_candidate\": \"Pérez\",\n    \"tipo_doc_candidate\": \"CC\",\n    \"num_doc_candidate\": 1234567890,\n    \"correo_candidate\": \"juan.perez@example.com\",\n    \"contrasena_candidate\": \"password123\",\n    \"estado_candidate\": \"ACTIVO\",\n    \"careerId\": 1,\n    \"roleId\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/candidates/register",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["candidates", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login Candidato",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"correo_candidate\": \"juan.perez@example.com\",\n    \"contrasena_candidate\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/candidates/login",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["candidates", "login"]
+						}
+					}
+				},
+				{
+					"name": "Perfil Candidato",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{candidate_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/candidates/profile",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["candidates", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Candidato",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{candidate_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre_candidate\": \"Juan Actualizado\",\n    \"apellido_candidate\": \"Pérez Actualizado\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/candidates/{{candidate_id}}",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["candidates", "{{candidate_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Aplicar a Elección",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{candidate_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"electionId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/candidates/apply",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["candidates", "apply"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Votantes",
+			"item": [
+				{
+					"name": "Registrar Votante",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre_voter\": \"Maria\",\n    \"apellido_voter\": \"García\",\n    \"tipo_doc_voter\": \"CC\",\n    \"num_doc_voter\": 9876543210,\n    \"correo_voter\": \"maria.garcia@example.com\",\n    \"contrasena_voter\": \"password123\",\n    \"estado_voter\": \"ACTIVO\",\n    \"careerId\": 1,\n    \"roleId\": 3\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/voters",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["voters"]
+						}
+					}
+				},
+				{
+					"name": "Login Votante",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"correo_voter\": \"maria.garcia@example.com\",\n    \"contrasena_voter\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/voters/login",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["voters", "login"]
+						}
+					}
+				},
+				{
+					"name": "Perfil Votante",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{voter_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/voters/profile",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["voters", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Votante",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{voter_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre_voter\": \"Maria Actualizada\",\n    \"apellido_voter\": \"García Actualizada\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/voters/{{voter_id}}",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["voters", "{{voter_id}}"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "candidate_token",
+			"value": ""
+		},
+		{
+			"key": "voter_token",
+			"value": ""
+		},
+		{
+			"key": "candidate_id",
+			"value": ""
+		},
+		{
+			"key": "voter_id",
+			"value": ""
+		}
+	]
+}

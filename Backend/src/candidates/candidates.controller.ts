@@ -12,7 +12,11 @@ import {
   BadRequestException,
   HttpCode,
   HttpStatus,
+  UseGuards,
+  Request
 } from "@nestjs/common";
+import { CandidateJwtGuard } from "../auth/guards/candidate-jwt.guard";
+import { CandidateAuthService } from "../auth/services/candidate-auth.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CandidatesService } from "./candidates.service";
 import { CreateCandidateDto } from "./dto/create-candidate.dto";
@@ -23,13 +27,17 @@ import { multerConfig } from "./upload.config";
 
 @Controller("candidates")
 export class CandidatesController {
-  constructor(private readonly candidatesService: CandidatesService) {}
+  constructor(
+    private readonly candidatesService: CandidatesService,
+    private readonly candidateAuthService: CandidateAuthService
+  ) {}
 
   @Get(":id")
   findOne(@Param("id", ParseIntPipe) id: number) {
     return this.candidatesService.findOne(id);
   }
 
+  @UseGuards(CandidateJwtGuard)
   @Post("apply")
   @HttpCode(HttpStatus.OK)
   applyToElection(@Body() applyToElectionDto: ApplyToElectionDto) {
@@ -46,6 +54,7 @@ export class CandidatesController {
     return this.candidatesService.findOneWithProposals(id);
   }
 
+  @UseGuards(CandidateJwtGuard)
   @Patch(":id")
   update(
     @Param("id", ParseIntPipe) id: number,
@@ -63,6 +72,7 @@ export class CandidatesController {
     return this.candidatesService.create(createCandidateDto, foto_candidate);
   }
 
+  @UseGuards(CandidateJwtGuard)
   @Post(":id/photo")
   @UseInterceptors(FileInterceptor("photo", multerConfig))
   async uploadPhoto(
@@ -76,6 +86,7 @@ export class CandidatesController {
     return this.candidatesService.uploadPhoto(id, file);
   }
 
+  @UseGuards(CandidateJwtGuard)
   @Delete(":id/photo")
   async deletePhoto(@Param("id", ParseIntPipe) id: number) {
     return this.candidatesService.deletePhoto(id);
@@ -83,8 +94,17 @@ export class CandidatesController {
 
   @Post("login")
   @HttpCode(HttpStatus.OK)
-  login(@Body() loginCandidateDto: LoginCandidateDto) {
-    return this.candidatesService.login(loginCandidateDto);
+  async login(@Body() loginCandidateDto: LoginCandidateDto) {
+    return this.candidateAuthService.login(
+      loginCandidateDto.correo_candidate,
+      loginCandidateDto.contrasena_candidate
+    );
+  }
+
+  @UseGuards(CandidateJwtGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user;
   }
 
   @Post("validate-password")
@@ -98,6 +118,7 @@ export class CandidatesController {
     );
   }
 
+  @UseGuards(CandidateJwtGuard)
   @Patch(":id/withdraw-election")
   @HttpCode(HttpStatus.OK)
   async withdrawFromElection(@Param("id", ParseIntPipe) id: number) {
