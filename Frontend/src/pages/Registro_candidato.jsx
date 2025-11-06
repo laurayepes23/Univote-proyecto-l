@@ -234,6 +234,7 @@ export default function RegistroCandidato() {
         try {
             const formPayload = new FormData();
             
+            // Agregar todos los campos del formulario
             Object.keys(formData).forEach(key => {
                 const value = formData[key];
                 if (value !== "") {
@@ -245,6 +246,11 @@ export default function RegistroCandidato() {
                 }
             });
 
+            // Validación adicional para campos requeridos
+            if (!formData.nombre_candidate || !formData.apellido_candidate || !formData.correo_candidate) {
+                throw new Error('Faltan campos requeridos');
+            }
+
             if (fotoFile) {
                 formPayload.append("foto_candidate", fotoFile);
             }
@@ -252,11 +258,8 @@ export default function RegistroCandidato() {
             console.log("Datos del formulario a enviar:");
             console.log("Todos los datos:", Object.fromEntries(formPayload));
             
-            const response = await api.post('/candidates/register', formPayload, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            // No necesitamos especificar Content-Type para FormData
+            const response = await api.post('/candidates/register', formPayload);
             
             console.log("Registro exitoso:", response.data);
             setSuccess("¡Registro exitoso! Serás redirigido al login.");
@@ -266,7 +269,19 @@ export default function RegistroCandidato() {
             }, 2000);
 
         } catch (error) {
-            const errorMessage = error.response?.data?.message || error.message || "Error en el registro. Por favor, inténtalo de nuevo.";
+            console.error("Error completo:", error);
+            let errorMessage;
+            
+            if (error.response?.status === 409) {
+                errorMessage = "Este correo electrónico ya está registrado.";
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.message) {
+                errorMessage = error.message;
+            } else {
+                errorMessage = "Error en el registro. Por favor, inténtalo de nuevo.";
+            }
+            
             console.error("Hubo un error al registrar el candidato:", errorMessage);
             setError(errorMessage);
         } finally {

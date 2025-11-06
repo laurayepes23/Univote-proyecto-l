@@ -14,6 +14,20 @@ export default function CandidatosVotante() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [yaVoto, setYaVoto] = useState(false);
+    const [voterId, setVoterId] = useState(null);
+
+    // Obtener voterId del localStorage al cargar el componente
+    useEffect(() => {
+        const storedVoterId = localStorage.getItem('voterId');
+        console.log("🔍 DEBUG - voterId del localStorage:", storedVoterId);
+        
+        if (storedVoterId) {
+            setVoterId(parseInt(storedVoterId, 10));
+        } else {
+            setError("No se encontró la información del votante. Por favor, inicia sesión nuevamente.");
+            setIsLoading(false);
+        }
+    }, []);
 
     // Función para obtener la URL completa de la foto
     const getCandidatePhoto = (candidato) => {
@@ -36,6 +50,9 @@ export default function CandidatosVotante() {
     };
 
     useEffect(() => {
+        // Solo hacer fetch de candidatos si tenemos voterId
+        if (!voterId) return;
+
         const fetchCandidatos = async () => {
             try {
                 const response = await axios.get(`${API_BASE_URL}/elections/${id}`);
@@ -67,7 +84,7 @@ export default function CandidatosVotante() {
         };
 
         fetchCandidatos();
-    }, [id]);
+    }, [id, voterId]); // Agregar voterId como dependencia
 
     const handleVotar = (candidato) => {
         if (yaVoto) {
@@ -78,13 +95,20 @@ export default function CandidatosVotante() {
     };
 
     const confirmarVoto = async () => {
-        const voterId = 1; // SIMULACIÓN, CAMBIAR POR EL ID REAL DEL VOTANTE
+        // Verificar que tenemos voterId antes de proceder
+        if (!voterId) {
+            alert("Error: No se pudo identificar al votante. Por favor, inicia sesión nuevamente.");
+            setCandidatoSeleccionado(null);
+            return;
+        }
 
         const voteData = {
             electionId: parseInt(id, 10),
             candidateId: candidatoSeleccionado.id_candidate,
             voterId: voterId
         };
+
+        console.log("📤 Enviando voto con datos:", voteData);
 
         try {
             await axios.post(`${API_BASE_URL}/votes`, voteData);
@@ -103,14 +127,15 @@ export default function CandidatosVotante() {
         setCandidatoSeleccionado(null);
     };
 
-    if (isLoading) {
+    // Mostrar loading mientras obtenemos voterId
+    if (isLoading && !voterId) {
         return (
             <div className="min-h-screen bg-gray-50">
                 <NavbarVotante />
                 <div className="pt-24 flex justify-center items-center">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900 mx-auto"></div>
-                        <p className="text-gray-600 text-lg mt-4">Cargando candidatos...</p>
+                        <p className="text-gray-600 text-lg mt-4">Cargando...</p>
                     </div>
                 </div>
             </div>

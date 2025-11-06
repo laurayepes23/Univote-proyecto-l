@@ -17,88 +17,123 @@ export default function Login() {
         setSuccess("");
 
         try {
-            // Intento 1: Iniciar sesión como candidato
-            const candidateResponse = await api.post('/candidates/login', {
-                correo_candidate: correo,
-                contrasena_candidate: contrasena
-            });
-            console.log("Inicio de sesión de candidato exitoso:", candidateResponse.data);
-            
-            // GUARDAR INFORMACIÓN DEL CANDIDATO EN LOCALSTORAGE
-            localStorage.setItem('candidateData', JSON.stringify(candidateResponse.data));
-            localStorage.setItem('candidateId', candidateResponse.data.id_candidate);
-            localStorage.setItem('candidateName', `${candidateResponse.data.nombre_candidate} ${candidateResponse.data.apellido_candidate}`);
-            localStorage.setItem('userRole', 'candidate');
-            
-            setSuccess("¡Inicio de sesión exitoso!");
-            navigate('/candidato');
-            return;
+            // Intento 1: Login como administrador
+            // Log de la petición
+            const requestData = {
+                correo: correo,
+                endpoint: '/administrators/login'
+            };
+            console.log("🔍 Enviando petición de login con: %o", requestData);
 
-        } catch (candidateError) {
-            console.log("❌ Error login candidato:", candidateError.response?.data);
-        }
-
-        try {
-            // Intento 2: Iniciar sesión como votante
-            const voterResponse = await api.post('/voters/login', {
-                correo_voter: correo,
-                contrasena_voter: contrasena
-            });
-            console.log("Inicio de sesión de votante exitoso:", voterResponse.data);
-            
-            // ✅ CORRECCIÓN: Verificar la estructura real de la respuesta
-            const voterData = voterResponse.data.voter || voterResponse.data;
-            console.log("📊 Datos del votante:", voterData);
-            
-            // ✅ CORRECCIÓN: Guardar el ID correctamente
-            localStorage.setItem('voterData', JSON.stringify(voterData));
-            localStorage.setItem('voterId', voterData.id_voter.toString());
-            localStorage.setItem('voterName', `${voterData.nombre_voter} ${voterData.apellido_voter}`);
-            localStorage.setItem('userRole', 'voter');
-            
-            // ✅ DEBUG: Verificar que se guardó correctamente
-            console.log("🔍 DEBUG - voterId guardado:", localStorage.getItem('voterId'));
-            console.log("🔍 DEBUG - userRole guardado:", localStorage.getItem('userRole'));
-            
-            setSuccess("¡Inicio de sesión exitoso!");
-            navigate('/votante');
-            return;
-
-        } catch (voterError) {
-            console.log("❌ Error login votante:", voterError.response?.data);
-        }
-
-        try {
-            // Intento 3: Iniciar sesión como administrador
             const adminResponse = await api.post('/administrators/login', {
                 correo_admin: correo,
                 contrasena_admin: contrasena
             });
-            console.log("Inicio de sesión de administrador exitoso:", adminResponse.data);
+
+            // Log detallado de la respuesta
+            const responseDetails = {
+                status: adminResponse.status,
+                statusText: adminResponse.statusText,
+                headers: Object.fromEntries(
+                    Object.entries(adminResponse.headers || {})
+                ),
+                data: adminResponse.data
+            };
+            console.log("🔍 Respuesta completa del servidor: %o", responseDetails);
             
-            // GUARDAR INFORMACIÓN DEL ADMINISTRADOR EN LOCALSTORAGE
-            localStorage.setItem('adminData', JSON.stringify(adminResponse.data));
-            localStorage.setItem('adminId', adminResponse.data.id_admin);
-            localStorage.setItem('adminName', `${adminResponse.data.nombre_admin} ${adminResponse.data.apellido_admin}`);
+            const adminData = adminResponse.data;
+            if (!adminData) {
+                throw new Error('No se recibieron datos del servidor');
+            }
+
+            console.log("🔍 Datos del administrador recibidos:", adminData);
+
+            // Verificar que tengamos los datos mínimos necesarios
+            if (!adminData.id_admin || !adminData.nombre_admin) {
+                throw new Error('Datos de administrador incompletos');
+            }
+
+            // Generar un token temporal basado en los datos del administrador
+            // Esto es temporal hasta que el backend proporcione tokens JWT
+            const tempToken = btoa(JSON.stringify({
+                id: adminData.id_admin,
+                role: 'admin',
+                timestamp: new Date().getTime()
+            }));
+
+            // Guardar los datos necesarios
+            const userData = {
+                id: adminData.id_admin,
+                nombre: adminData.nombre_admin,
+                apellido: adminData.apellido_admin,
+                role: 'admin'
+            };
+
+            // Guardar datos del administrador
+            localStorage.setItem('adminData', JSON.stringify(adminData));
+            localStorage.setItem('adminId', userData.id.toString());
+            localStorage.setItem('adminName', `${userData.nombre} ${userData.apellido}`);
             localStorage.setItem('userRole', 'admin');
-            
+            localStorage.setItem('token', tempToken);
+
+            // Debug: Verificar que se guardó correctamente
+            console.log("✅ Datos guardados correctamente:", {
+                adminId: localStorage.getItem('adminId'),
+                adminName: localStorage.getItem('adminName'),
+                userRole: localStorage.getItem('userRole'),
+                tokenExists: !!localStorage.getItem('token')
+            });
+
             setSuccess("¡Inicio de sesión exitoso!");
             navigate('/administrador');
-            return;
-        } catch (adminError) {
-            // Si los tres intentos fallan, mostramos un error genérico
-            const errorMessage = adminError.response?.data?.message || "Correo o contraseña incorrectos.";
-            setError(errorMessage);
-            console.error("Error al iniciar sesión:", errorMessage);
+
+        } catch (error) {
+            // Log detallado del error
+            const errorDetails = {
+                mensaje: error.message,
+                respuesta: error.response ? {
+                    status: error.response.status,
+                    statusText: error.response.statusText,
+                    data: error.response.data,
+                    headers: Object.fromEntries(
+                        Object.entries(error.response.headers || {})
+                    )
+                } : 'No hay respuesta del servidor',
+                datosEnviados: {
+                    correo_admin: correo,
+                    url: '/administrators/login'
+                },
+                tipo: error.constructor.name,
+                stack: error.stack
+            };
+            console.log("🔍 Error detallado: %o", errorDetails);
             
-            // Limpiar localStorage en caso de error
-            localStorage.removeItem('candidateData');
-            localStorage.removeItem('candidateId');
-            localStorage.removeItem('voterData');
-            localStorage.removeItem('voterId');
+            // Solo limpiar datos relacionados con la sesión
+            localStorage.removeItem('token');
+            localStorage.removeItem('userRole');
             localStorage.removeItem('adminData');
             localStorage.removeItem('adminId');
-            localStorage.removeItem('userRole');
+            localStorage.removeItem('adminName');
+            
+            let errorMessage = "Error al iniciar sesión. Por favor, verifica tus credenciales.";
+            
+            if (error.response?.data?.message) {
+                if (Array.isArray(error.response.data.message)) {
+                    const userMessages = error.response.data.message.filter(msg => 
+                        !msg.includes('should not exist') && 
+                        !msg.includes('must be a')
+                    );
+                    errorMessage = userMessages.join('\n');
+                } else {
+                    errorMessage = error.response.data.message;
+                }
+            } else if (error.message.includes('token')) {
+                console.error("Estructura de la respuesta que causó el error:", error.adminData);
+                errorMessage = "Error en la autenticación. Por favor, contacta al administrador.";
+            }
+            
+            console.error("Error al iniciar sesión:", errorMessage);
+            setError(errorMessage);
         }
     };
 

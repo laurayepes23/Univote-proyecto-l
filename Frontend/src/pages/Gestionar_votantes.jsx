@@ -74,7 +74,7 @@ const Gestionar_votantes = () => {
       <>
         <Navbar_admin />
         <div className="p-6 mt-24 text-center text-red-600 font-bold">Error: {error}</div>
-        <Footer />
+       
       </>
     );
   }

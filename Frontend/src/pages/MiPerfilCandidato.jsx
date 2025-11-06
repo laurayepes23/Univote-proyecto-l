@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NavbarCandidato from '../components/NavbarCandidato'
 import Footer from '../components/Footer'
-import axios from 'axios'
+import api from '../api/axios'
 import {
   FaEnvelope,
   FaPen,
@@ -17,8 +17,6 @@ import {
   FaIdCard,
   FaUniversity
 } from 'react-icons/fa'
-
-const API_BASE_URL = 'http://localhost:3000'
 
 export default function MiPerfilCandidato() {
   const navigate = useNavigate()
@@ -47,14 +45,27 @@ export default function MiPerfilCandidato() {
 
       const candidateId = localStorage.getItem('candidateId')
       const userRole = localStorage.getItem('userRole')
+      const token = localStorage.getItem('token')
+
+      console.log('Debug - candidateId:', candidateId)
+      console.log('Debug - userRole:', userRole)
+      console.log('Debug - token:', token)
+
+      if (!token) {
+        setError('No hay sesión activa. Por favor inicia sesión nuevamente.')
+        setLoading(false)
+        navigate('/login')
+        return
+      }
 
       if (userRole !== 'candidate' || !candidateId) {
         setError('No tienes permisos para acceder a esta página. Debes iniciar sesión como candidato.')
         setLoading(false)
+        navigate('/login')
         return
       }
 
-      const response = await axios.get(`${API_BASE_URL}/candidates/${candidateId}`)
+      const response = await api.get(`/candidates/${candidateId}`)
       const candidateData = response.data
 
       let fotoUrl = '/img/default-avatar.png'
@@ -63,10 +74,10 @@ export default function MiPerfilCandidato() {
           fotoUrl = candidateData.foto_candidate
         } 
         else if (candidateData.foto_candidate.startsWith('/')) {
-          fotoUrl = `${API_BASE_URL}${candidateData.foto_candidate}`
+          fotoUrl = `http://localhost:3000${candidateData.foto_candidate}`
         }
         else {
-          fotoUrl = `${API_BASE_URL}/uploads/candidatos/${candidateData.foto_candidate}`
+          fotoUrl = `http://localhost:3000/uploads/candidatos/${candidateData.foto_candidate}`
         }
         fotoUrl += `?t=${Date.now()}`
       }
@@ -118,7 +129,7 @@ export default function MiPerfilCandidato() {
           correo: parsedData.correo_candidate,
           estado: parsedData.estado_candidate,
           foto: parsedData.foto_candidate ? 
-                `${API_BASE_URL}${parsedData.foto_candidate}?t=${Date.now()}` : 
+                `http://localhost:3000${parsedData.foto_candidate}?t=${Date.now()}` : 
                 '/img/default-avatar.png',
           eleccion: parsedData.election?.nombre_election || 'No postulado',
           id_eleccion: parsedData.election?.id_election || null,
@@ -250,14 +261,9 @@ export default function MiPerfilCandidato() {
         return
       }
 
-      const response = await axios.patch(
-        `${API_BASE_URL}/candidates/${candidateId}`,
-        updateData,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+      const response = await api.patch(
+        `/candidates/${candidateId}`,
+        updateData
       )
 
       console.log('✅ Perfil actualizado con éxito:', response.data)

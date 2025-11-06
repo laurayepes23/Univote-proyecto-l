@@ -7,33 +7,48 @@ const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user')
-    return savedUser ? JSON.parse(savedUser) : null
-  })
-  const navigate = useNavigate()
+    const token = localStorage.getItem('token');
+    const userRole = localStorage.getItem('userRole');
+    return token && userRole ? { token, role: userRole } : null;
+  });
+  const navigate = useNavigate();
 
-  const login = (username, password) => {
-    if (username === 'admin' && password === 'password') {
-      const newUser = { username: 'admin' }
-      setUser(newUser)
-      localStorage.setItem('user', JSON.stringify(newUser)) 
-      localStorage.setItem('token', 'fake-jwt-token')
-      toast.success('Login exitoso!')
-      navigate('/usuarios', { replace: true }) 
-      toast.error('Credenciales incorrectas')
+  const login = (token, role, userData) => {
+    setUser({ token, role });
+    localStorage.setItem('token', token);
+    localStorage.setItem('userRole', role);
+    if (role === 'admin' && userData) {
+      localStorage.setItem('adminData', JSON.stringify(userData));
+      localStorage.setItem('adminId', userData.id?.toString());
+      localStorage.setItem('adminName', `${userData.nombre} ${userData.apellido}`);
     }
-  }
+    toast.success('¡Inicio de sesión exitoso!');
+  };
 
   const logout = () => {
-    setUser(null)
-    localStorage.removeItem('user')
-    localStorage.removeItem('token')
-    toast.info('Sesión cerrada')
-    navigate('/login', { replace: true }) 
-  }
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('adminData');
+    localStorage.removeItem('adminId');
+    localStorage.removeItem('adminName');
+    toast.info('Sesión cerrada');
+    navigate('/login', { replace: true });
+  };
+
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    const userRole = localStorage.getItem('userRole');
+    console.log('🔍 Checking auth:', { token, userRole });
+    return {
+      isValid: Boolean(token && userRole),
+      token,
+      role: userRole
+    };
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, checkAuth }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,3 +1,4 @@
+
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from 'react';
 import NavbarCandidato from "../components/NavbarCandidato";
@@ -352,7 +353,6 @@ export default function GestionarPropuestas() {
                     </div>
                 )}
             </main>
-            <Footer />
         </div>
     );
 }

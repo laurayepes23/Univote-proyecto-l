@@ -7,7 +7,7 @@ const Administrador = () => {
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Navbar_admin />
-            <div className="h-24"></div> {/* Espacio para el navbar fijo */}
+            <div className="h-24"></div> 
 
             <main className="flex-grow p-8">
                 <div className="text-center mb-12">

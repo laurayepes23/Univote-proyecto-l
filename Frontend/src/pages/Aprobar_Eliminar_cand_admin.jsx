@@ -1,35 +1,58 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import Navbar_admin from "../components/Navbar_admin";
-import axios from "axios";
-
-// Ajusta esta URL para que apunte a tu endpoint de candidatos en el backend
-const API_BASE_URL = "http://localhost:3000";
+import api from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 
 const Aprobar_Eliminar_cand_admin = () => {
-  // Estado para almacenar los candidatos de la base de datos
+  const navigate = useNavigate();
+  const { checkAuth } = useAuth();
   const [candidatos, setCandidatos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null); // Para mensajes de éxito/error
+  const [message, setMessage] = useState(null); 
 
-  // Función para obtener los candidatos de la API
-  const fetchCandidatos = async () => {
+  const fetchCandidatos = React.useCallback(async () => {
+    const { isValid, role, token } = checkAuth();
+    console.log('🔍 Checking auth in fetchCandidatos:', { isValid, role, token });
+    
+    if (!isValid || role !== 'admin') {
+      console.log('❌ Auth Check Failed:', { isValid, role, token });
+      setError("No tiene autorización para acceder a esta página.");
+      navigate('/login');
+      return;
+    }
+    
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/candidates`);
+      console.log('🔍 Fetching candidates...');
+      const response = await api.get('/candidates');
+      console.log('✅ Candidates fetched:', response.data);
       setCandidatos(response.data);
+      setError(null); // Clear any previous errors
     } catch (err) {
       console.error("Error al cargar la lista de candidatos:", err);
-      setError("No se pudo cargar la lista de candidatos.");
+      console.log('🔍 Error details:', {
+        status: err.response?.status,
+        message: err.message,
+        data: err.response?.data
+      });
+      
+      if (err.response?.status === 401) {
+        setError("Su sesión ha expirado. Por favor, inicie sesión nuevamente.");
+        console.log('❌ Authentication error detected');
+        navigate('/login');
+      } else {
+        setError("No se pudo cargar la lista de candidatos. Por favor, intente de nuevo.");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate, checkAuth]);
 
-  // Carga los candidatos al montar el componente
   useEffect(() => {
     fetchCandidatos();
-  }, []);
+  }, [fetchCandidatos]);
 
   // Función para obtener la URL completa de la foto
   const getCandidatePhoto = (candidato) => {
@@ -37,59 +60,95 @@ const Aprobar_Eliminar_cand_admin = () => {
     
     let fotoUrl = candidato.foto_candidate;
     
-    // Si ya es una URL completa
     if (fotoUrl.startsWith('http')) {
       return fotoUrl;
     }
-    // Si es una ruta relativa que empieza con /
+    
     else if (fotoUrl.startsWith('/')) {
-      return `${API_BASE_URL}${fotoUrl}`;
+      return `http://localhost:3000${fotoUrl}`;
     }
-    // Si es solo el nombre del archivo
     else {
-      return `${API_BASE_URL}/uploads/candidatos/${fotoUrl}`;
+      return `http://localhost:3000/uploads/candidatos/${fotoUrl}`;
     }
   };
 
   // Función para aprobar un candidato
-  const aprobarCandidato = async (id_candidate) => {
+  const aprobarCandidato = React.useCallback(async (id_candidate) => {
     try {
-      await axios.patch(`${API_BASE_URL}/candidates/${id_candidate}`, {
-        estado_candidate: "Aprobado",
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setMessage("❌ No hay sesión activa. Por favor, inicie sesión nuevamente.");
+        navigate('/login');
+        return;
+      }
+
+      await api.patch(`/candidates/${id_candidate}`, {
+        estado_candidate: "Aprobado"
       });
+      
       setMessage("✅ Candidato aprobado correctamente.");
       // Actualiza el estado local para reflejar el cambio instantáneamente
-      setCandidatos(candidatos.map(cand => 
-        cand.id_candidate === id_candidate ? { ...cand, estado_candidate: "Aprobado" } : cand
-      ));
+      setCandidatos(prevCandidatos => 
+        prevCandidatos.map(cand => 
+          cand.id_candidate === id_candidate ? { ...cand, estado_candidate: "Aprobado" } : cand
+        )
+      );
+      
+      // Actualizar la lista completa después de la aprobación
+      fetchCandidatos();
     } catch (err) {
       console.error("Error al aprobar el candidato:", err);
-      setMessage("❌ Error al aprobar el candidato. Intente de nuevo.");
+      if (err.response?.status === 401) {
+        setMessage("❌ No tiene autorización. Por favor, inicie sesión nuevamente.");
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        setMessage("❌ Error al aprobar el candidato. Intente de nuevo.");
+      }
     }
-  };
+  }, [navigate, fetchCandidatos]);
 
   // Función para rechazar un candidato
-  const rechazarCandidato = async (id_candidate) => {
+  const rechazarCandidato = React.useCallback(async (id_candidate) => {
     try {
-      await axios.patch(`${API_BASE_URL}/candidates/${id_candidate}`, {
-        estado_candidate: "No Aprobado",
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setMessage("❌ No hay sesión activa. Por favor, inicie sesión nuevamente.");
+        navigate('/login');
+        return;
+      }
+
+      await api.patch(`/candidates/${id_candidate}`, {
+        estado_candidate: "No Aprobado"
       });
+      
       setMessage("✅ Candidato cambiado a 'No Aprobado' correctamente.");
       // Actualizamos el estado local
-      setCandidatos(candidatos.map(cand => 
-        cand.id_candidate === id_candidate ? { ...cand, estado_candidate: "No Aprobado" } : cand
-      ));
+      setCandidatos(prevCandidatos => 
+        prevCandidatos.map(cand => 
+          cand.id_candidate === id_candidate ? { ...cand, estado_candidate: "No Aprobado" } : cand
+        )
+      );
+      
+      // Actualizar la lista completa después del rechazo
+      fetchCandidatos();
     } catch (err) {
       console.error("Error al rechazar el candidato:", err);
-      setMessage("❌ Error al rechazar el candidato. Intente de nuevo.");
+      if (err.response?.status === 401) {
+        setMessage("❌ No tiene autorización. Por favor, inicie sesión nuevamente.");
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        setMessage("❌ Error al rechazar el candidato. Intente de nuevo.");
+      }
     }
-  };
+  }, [navigate, fetchCandidatos]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
-      {/* Navbar administrador */}
+      
       <Navbar_admin />
-      {/* Contenido principal */}
+
       <div className="flex-grow pt-24 px-6 pb-8">
         <h1 className="text-4xl font-extrabold mb-8 text-center text-blue-900">
           Gestión de Candidatos
